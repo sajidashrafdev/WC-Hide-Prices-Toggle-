@@ -535,3 +535,114 @@ class WC_Hide_Prices_Toggle {
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $msg ) . '</p></div>';
 		}
 	}
+
+	/* ===================== Bulk matching ===================== */
+
+	private function get_matched_product_ids_for_bulk() {
+		$s = $this->get_settings();
+		$mode = (string) $s['targeting_mode'];
+
+		$base = [
+			'post_type'      => 'product',
+			'fields'         => 'ids',
+			'posts_per_page' => -1,
+			'no_found_rows'  => true,
+			'post_status'    => [ 'publish', 'draft' ],
+		];
+
+		$list    = $this->parse_list( $s['product_list'] );
+		$cat_ids = is_array( $s['category_ids'] ) ? $s['category_ids'] : [];
+
+		if ( $mode === 'all' ) return get_posts( $base );
+
+		if ( $mode === 'specific_products' ) {
+			$args = $this->apply_product_list_to_query_args( $base, $list );
+			return get_posts( $args );
+		}
+
+		if ( $mode === 'categories' ) {
+			$args = $this->apply_categories_to_query_args( $base, $cat_ids );
+			return get_posts( $args );
+		}
+
+		// products_or_categories
+		$ids_a = [];
+		$ids_b = [];
+
+		if ( ! empty( $list ) ) {
+			$args_a = $this->apply_product_list_to_query_args( $base, $list );
+			$ids_a  = get_posts( $args_a );
+		}
+		if ( ! empty( $cat_ids ) ) {
+			$args_b = $this->apply_categories_to_query_args( $base, $cat_ids );
+			$ids_b  = get_posts( $args_b );
+		}
+
+		return array_values( array_unique( array_merge( $ids_a, $ids_b ) ) );
+	}
+
+	private function apply_categories_to_query_args( $args, $cat_ids ) {
+		$cat_ids = array_values( array_filter( array_map( 'absint', (array) $cat_ids ) ) );
+		if ( empty( $cat_ids ) ) {
+			$args['post__in'] = [ 0 ];
+			return $args;
+		}
+
+		$args['tax_query'] = [
+			[
+				'taxonomy' => 'product_cat',
+				'field'    => 'term_id',
+				'terms'    => $cat_ids,
+			],
+		];
+
+		return $args;
+	}
+
+	private function apply_product_list_to_query_args( $args, $list ) {
+		$ids  = [];
+		$skus = [];
+
+		foreach ( (array) $list as $item ) {
+			$item = trim( (string) $item );
+			if ( $item === '' ) continue;
+
+			if ( ctype_digit( $item ) ) $ids[] = (int) $item;
+			else $skus[] = $item;
+		}
+
+		$ids  = array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+		$skus = array_values( array_unique( array_filter( $skus ) ) );
+
+		if ( ! empty( $ids ) && empty( $skus ) ) {
+			$args['post__in'] = $ids;
+			return $args;
+		}
+
+		if ( empty( $ids ) && ! empty( $skus ) ) {
+			$args['meta_query'] = [
+				[
+					'key'     => '_sku',
+					'value'   => $skus,
+					'compare' => 'IN',
+				],
+			];
+			return $args;
+		}
+
+		// Both: merge SKU matches + explicit IDs
+		$args_sku = $args;
+		$args_sku['meta_query'] = [
+			[
+				'key'     => '_sku',
+				'value'   => $skus,
+				'compare' => 'IN',
+			],
+		];
+		$ids_from_skus = get_posts( $args_sku );
+
+		$merged = array_values( array_unique( array_merge( $ids_from_skus, $ids ) ) );
+		$args['post__in'] = $merged;
+
+		return $args;
+	}
