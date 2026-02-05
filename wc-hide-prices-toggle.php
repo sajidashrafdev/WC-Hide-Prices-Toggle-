@@ -58,3 +58,33 @@ class WC_Hide_Prices_Toggle {
 			},
 			'wchpt'
 		);
+
+		add_settings_field( 'enabled', 'Enable hiding prices', [ $this, 'field_enabled' ], 'wchpt', 'wchpt_section_main' );
+		add_settings_field( 'hide_short_desc', 'Enable hiding short description', [ $this, 'field_hide_short_desc' ], 'wchpt', 'wchpt_section_main' );
+		add_settings_field( 'hide_add_to_cart', 'Enable hiding Add to cart', [ $this, 'field_hide_add_to_cart' ], 'wchpt', 'wchpt_section_main' );
+
+		add_settings_field( 'targeting_mode', 'Targeting', [ $this, 'field_targeting_mode' ], 'wchpt', 'wchpt_section_main' );
+		add_settings_field( 'product_list', 'Product IDs / SKUs (one per line)', [ $this, 'field_product_list' ], 'wchpt', 'wchpt_section_main' );
+		add_settings_field( 'category_ids', 'Categories', [ $this, 'field_categories' ], 'wchpt', 'wchpt_section_main' );
+
+		add_settings_field( 'replacement_text', 'Price replacement text (optional)', [ $this, 'field_replacement_text' ], 'wchpt', 'wchpt_section_main' );
+		add_settings_field( 'short_desc_replacement', 'Short description replacement (optional)', [ $this, 'field_short_desc_replacement' ], 'wchpt', 'wchpt_section_main' );
+
+		/* ========== BULK SECTION (printed OUTSIDE settings form) ========== */
+		add_settings_section(
+			'wchpt_section_bulk',
+			'Bulk Actions',
+			function () {
+				echo '<p>Run one-time actions on all matched products (based on Targeting settings you saved above).</p>';
+			},
+			'wchpt_bulk'
+		);
+
+		add_settings_field(
+			'bulk_actions',
+			'Status + Price bulk tools',
+			[ $this, 'field_bulk_actions' ],
+			'wchpt_bulk',
+			'wchpt_section_bulk'
+		);
+	}
