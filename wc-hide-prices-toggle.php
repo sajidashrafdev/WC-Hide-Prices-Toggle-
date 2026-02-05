@@ -646,3 +646,57 @@ class WC_Hide_Prices_Toggle {
 
 		return $args;
 	}
+
+	/* ===================== Helpers ===================== */
+
+	private function parse_list( $raw ) {
+		$raw = (string) $raw;
+		$lines = preg_split( "/\r\n|\n|\r/", $raw );
+		$out = [];
+		foreach ( $lines as $line ) {
+			$line = trim( $line );
+			if ( $line === '' ) continue;
+			$out[] = $line;
+		}
+		return array_values( array_unique( $out ) );
+	}
+
+	private function product_matches_list( $product, $list ) {
+		if ( ! $product || ! is_a( $product, 'WC_Product' ) ) return false;
+
+		$id  = (string) $product->get_id();
+		$sku = (string) $product->get_sku();
+
+		if ( in_array( $id, $list, true ) ) return true;
+		if ( $sku !== '' && in_array( $sku, $list, true ) ) return true;
+
+		// Variation: match parent too
+		if ( $product->is_type( 'variation' ) ) {
+			$parent_id = (string) $product->get_parent_id();
+			if ( $parent_id && in_array( $parent_id, $list, true ) ) return true;
+
+			$parent = wc_get_product( (int) $parent_id );
+			if ( $parent && $parent->get_sku() && in_array( (string) $parent->get_sku(), $list, true ) ) return true;
+		}
+
+		return false;
+	}
+
+	private function product_in_selected_categories( $product, $selected_cat_ids ) {
+		if ( ! $product || ! is_a( $product, 'WC_Product' ) ) return false;
+
+		$product_id = $product->get_id();
+		if ( $product->is_type( 'variation' ) ) {
+			$parent_id = (int) $product->get_parent_id();
+			if ( $parent_id > 0 ) $product_id = $parent_id;
+		}
+
+		$term_ids = wc_get_product_term_ids( (int) $product_id, 'product_cat' );
+		if ( empty( $term_ids ) ) return false;
+
+		foreach ( $term_ids as $tid ) {
+			if ( in_array( (int) $tid, (array) $selected_cat_ids, true ) ) return true;
+		}
+		return false;
+	}
+}
