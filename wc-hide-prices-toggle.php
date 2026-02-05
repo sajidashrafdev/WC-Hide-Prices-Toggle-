@@ -88,3 +88,32 @@ class WC_Hide_Prices_Toggle {
 			'wchpt_section_bulk'
 		);
 	}
+
+	public function sanitize_settings( $input ) {
+		$category_ids = [];
+		if ( isset( $input['category_ids'] ) ) {
+			$raw = $input['category_ids'];
+			if ( is_array( $raw ) ) {
+				$category_ids = array_values( array_unique( array_filter( array_map( 'absint', $raw ) ) ) );
+			} else {
+				$category_ids = array_values( array_unique( array_filter( array_map( 'absint', explode( ',', (string) $raw ) ) ) ) );
+			}
+		}
+
+		$allowed_modes = [ 'all', 'specific_products', 'categories', 'products_or_categories' ];
+		$mode = isset( $input['targeting_mode'] ) ? (string) $input['targeting_mode'] : 'all';
+		if ( ! in_array( $mode, $allowed_modes, true ) ) $mode = 'all';
+
+		return [
+			'enabled'                => ! empty( $input['enabled'] ) ? 1 : 0,
+			'hide_short_desc'        => ! empty( $input['hide_short_desc'] ) ? 1 : 0,
+			'hide_add_to_cart'       => ! empty( $input['hide_add_to_cart'] ) ? 1 : 0,
+
+			'targeting_mode'         => $mode,
+			'product_list'           => isset( $input['product_list'] ) ? trim( wp_unslash( $input['product_list'] ) ) : '',
+			'category_ids'           => $category_ids,
+
+			'replacement_text'       => isset( $input['replacement_text'] ) ? sanitize_text_field( wp_unslash( $input['replacement_text'] ) ) : '',
+			'short_desc_replacement' => isset( $input['short_desc_replacement'] ) ? wp_kses_post( wp_unslash( $input['short_desc_replacement'] ) ) : '',
+		];
+	}
