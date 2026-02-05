@@ -45,3 +45,16 @@ class WC_Hide_Prices_Toggle {
 			[ $this, 'render_settings_page' ]
 		);
 	}
+
+	public function register_settings() {
+		register_setting( 'wchpt_group', self::OPTION_KEY, [ $this, 'sanitize_settings' ] );
+
+		/* ========== SETTINGS SECTION (printed inside settings form) ========== */
+		add_settings_section(
+			'wchpt_section_main',
+			'Visibility Settings',
+			function () {
+				echo '<p>Hide/replace Price and Short Description. Optionally hide Add to cart too. Use Targeting to decide what products are affected.</p>';
+			},
+			'wchpt'
+		);
