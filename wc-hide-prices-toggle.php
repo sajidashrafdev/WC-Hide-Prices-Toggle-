@@ -700,3 +700,9 @@ class WC_Hide_Prices_Toggle {
 		return false;
 	}
 }
+
+add_action( 'plugins_loaded', function () {
+	if ( class_exists( 'WooCommerce' ) ) {
+		new WC_Hide_Prices_Toggle();
+	}
+} );
