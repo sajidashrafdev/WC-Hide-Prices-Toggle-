@@ -34,3 +34,14 @@ class WC_Hide_Prices_Toggle {
 		// Admin notice
 		add_action( 'admin_notices', [ $this, 'maybe_show_notice' ] );
 	}
+
+		public function add_settings_page() {
+		add_submenu_page(
+			'woocommerce',
+			'Hide Prices & Tools',
+			'Hide Prices',
+			'manage_woocommerce',
+			'wchpt-hide-prices',
+			[ $this, 'render_settings_page' ]
+		);
+	}
