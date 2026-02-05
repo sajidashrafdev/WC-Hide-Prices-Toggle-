@@ -117,3 +117,21 @@ class WC_Hide_Prices_Toggle {
 			'short_desc_replacement' => isset( $input['short_desc_replacement'] ) ? wp_kses_post( wp_unslash( $input['short_desc_replacement'] ) ) : '',
 		];
 	}
+
+	private function get_settings() {
+		$defaults = [
+			'enabled'                => 0,
+			'hide_short_desc'        => 0,
+			'hide_add_to_cart'       => 0,
+
+			'targeting_mode'         => 'all',
+			'product_list'           => '',
+			'category_ids'           => [],
+
+			'replacement_text'       => '',
+			'short_desc_replacement' => '',
+		];
+
+		$s = get_option( self::OPTION_KEY, [] );
+		return wp_parse_args( is_array( $s ) ? $s : [], $defaults );
+	}
